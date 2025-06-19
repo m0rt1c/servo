@@ -2246,9 +2246,13 @@ impl Document {
             EventCancelable::Cancelable,
             Some(&self.window),
             0i32,
-            Finite::wrap(event.delta.x),
-            Finite::wrap(event.delta.y),
-            Finite::wrap(event.delta.z),
+            // winit defines positive wheel delta values as revealing more content left/up.
+            // https://docs.rs/winit-gtk/latest/winit/event/enum.MouseScrollDelta.html
+            // This is the opposite of wheel delta in uievents
+            // https://w3c.github.io/uievents/#dom-wheeleventinit-deltaz
+            Finite::wrap(-event.delta.x),
+            Finite::wrap(-event.delta.y),
+            Finite::wrap(-event.delta.z),
             event.delta.mode as u32,
             can_gc,
         );
@@ -3668,7 +3672,9 @@ impl Document {
         // Step 5. Return the result of applying the URL parser to url, with baseURL and encoding.
         url::Url::options()
             .base_url(Some(base_url.as_url()))
-            .encoding_override(Some(&|s| encoding.encode(s).0))
+            .encoding_override(Some(&|input| {
+                servo_url::encoding::encode_as_url_query_string(input, encoding)
+            }))
             .parse(url)
             .map(ServoUrl::from)
     }

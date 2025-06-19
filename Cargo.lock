@@ -7201,6 +7201,7 @@ dependencies = [
 name = "servo_url"
 version = "0.0.1"
 dependencies = [
+ "encoding_rs",
  "malloc_size_of_derive",
  "serde",
  "servo_arc",
@@ -7218,6 +7219,8 @@ dependencies = [
  "backtrace",
  "cc",
  "cfg-if",
+ "constellation_traits",
+ "crossbeam-channel",
  "dirs",
  "dpi",
  "egui",
@@ -7264,6 +7267,7 @@ dependencies = [
  "tracing-perfetto",
  "tracing-subscriber",
  "url",
+ "webdriver_server",
  "windows-sys 0.59.0",
  "winit",
  "winres",
