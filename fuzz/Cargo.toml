@@ -8,6 +8,7 @@ edition = "2024"
 cargo-fuzz = true
 
 [dependencies]
+js = { package = "mozjs", git = "https://github.com/servo/mozjs" }
 libfuzzer-sys = "0.4"
 
 [dependencies.script_bindings]
@@ -15,6 +16,9 @@ path = "../components/script_bindings"
 
 [dependencies.script]
 path = "../components/script"
+
+[dependencies.libservo]
+path = "../components/servo"
 
 [[bin]]
 name = "writablestream"
