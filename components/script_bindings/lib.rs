@@ -62,7 +62,7 @@ pub mod codegen {
     pub mod PrototypeList {
         include!(concat!(env!("OUT_DIR"), "/PrototypeList.rs"));
     }
-    pub mod DomTypes {
+    pub(crate) mod DomTypes {
         include!(concat!(env!("OUT_DIR"), "/DomTypes.rs"));
     }
     #[allow(
