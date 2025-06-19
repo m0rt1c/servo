@@ -1,0 +1,24 @@
+[package]
+name = "servo-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2024"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.script_bindings]
+path = "../components/script_bindings"
+
+[dependencies.script]
+path = "../components/script"
+
+[[bin]]
+name = "writablestream"
+path = "fuzz_targets/components/script/dom/writablestream.rs"
+test = false
+doc = false
+bench = false

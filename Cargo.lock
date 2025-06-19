@@ -264,6 +264,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "arbitrary"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dde20b3d026af13f561bdd0f15edf01fc734f0dafcedbaf42bba506a9517f223"
+
+[[package]]
 name = "arboard"
 version = "3.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1070,7 +1076,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -4318,13 +4324,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "libfuzzer-sys"
+version = "0.4.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cf78f52d400cf2d84a3a973a78a592b4adc535739e0a5597a0da6f0c357adc75"
+dependencies = [
+ "arbitrary",
+ "cc",
+]
+
+[[package]]
 name = "libloading"
 version = "0.8.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -6815,6 +6831,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "servo-fuzz"
+version = "0.0.0"
+dependencies = [
+ "libfuzzer-sys",
+ "script",
+ "script_bindings",
+]
+
+[[package]]
 name = "servo-media"
 version = "0.1.0"
 source = "git+https://github.com/servo/media#4931a4b380acd9c95b8787cbcfa812823864e2d0"
@@ -9184,7 +9209,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
