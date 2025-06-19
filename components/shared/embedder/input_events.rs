@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-use keyboard_types::{CompositionEvent, KeyboardEvent};
+use keyboard_types::{Code, CompositionEvent, Key, KeyState, Location, Modifiers};
 use log::error;
 use malloc_size_of_derive::MallocSizeOf;
 use serde::{Deserialize, Serialize};
@@ -20,6 +20,7 @@ pub enum InputEvent {
     Keyboard(KeyboardEvent),
     MouseButton(MouseButtonEvent),
     MouseMove(MouseMoveEvent),
+    MouseLeave(MouseLeaveEvent),
     Touch(TouchEvent),
     Wheel(WheelEvent),
     Scroll(ScrollEvent),
@@ -42,6 +43,7 @@ impl InputEvent {
             InputEvent::Keyboard(..) => None,
             InputEvent::MouseButton(event) => Some(event.point),
             InputEvent::MouseMove(event) => Some(event.point),
+            InputEvent::MouseLeave(event) => Some(event.point),
             InputEvent::Touch(event) => Some(event.point),
             InputEvent::Wheel(event) => Some(event.point),
             InputEvent::Scroll(..) => None,
@@ -53,9 +55,10 @@ impl InputEvent {
             InputEvent::EditingAction(..) => None,
             InputEvent::Gamepad(..) => None,
             InputEvent::Ime(..) => None,
-            InputEvent::Keyboard(..) => None,
+            InputEvent::Keyboard(event) => event.webdriver_id,
             InputEvent::MouseButton(event) => event.webdriver_id,
             InputEvent::MouseMove(event) => event.webdriver_id,
+            InputEvent::MouseLeave(..) => None,
             InputEvent::Touch(..) => None,
             InputEvent::Wheel(event) => event.webdriver_id,
             InputEvent::Scroll(..) => None,
@@ -67,13 +70,16 @@ impl InputEvent {
             InputEvent::EditingAction(..) => {},
             InputEvent::Gamepad(..) => {},
             InputEvent::Ime(..) => {},
-            InputEvent::Keyboard(..) => {},
+            InputEvent::Keyboard(ref mut event) => {
+                event.webdriver_id = webdriver_id;
+            },
             InputEvent::MouseButton(ref mut event) => {
                 event.webdriver_id = webdriver_id;
             },
             InputEvent::MouseMove(ref mut event) => {
                 event.webdriver_id = webdriver_id;
             },
+            InputEvent::MouseLeave(..) => {},
             InputEvent::Touch(..) => {},
             InputEvent::Wheel(ref mut event) => {
                 event.webdriver_id = webdriver_id;
@@ -82,6 +88,51 @@ impl InputEvent {
         };
 
         self
+    }
+}
+
+/// Recreate KeyboardEvent from keyboard_types to pair it with webdriver_id,
+/// which is used for webdriver action synchronization.
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+pub struct KeyboardEvent {
+    pub event: ::keyboard_types::KeyboardEvent,
+    webdriver_id: Option<WebDriverMessageId>,
+}
+
+impl KeyboardEvent {
+    pub fn new(keyboard_event: ::keyboard_types::KeyboardEvent) -> Self {
+        Self {
+            event: keyboard_event,
+            webdriver_id: None,
+        }
+    }
+
+    pub fn new_without_event(
+        state: KeyState,
+        key: Key,
+        code: Code,
+        location: Location,
+        modifiers: Modifiers,
+        repeat: bool,
+        is_composing: bool,
+    ) -> Self {
+        Self::new(::keyboard_types::KeyboardEvent {
+            state,
+            key,
+            code,
+            location,
+            modifiers,
+            repeat,
+            is_composing,
+        })
+    }
+
+    pub fn from_state_and_key(state: KeyState, key: Key) -> Self {
+        Self::new(::keyboard_types::KeyboardEvent {
+            state,
+            key,
+            ..::keyboard_types::KeyboardEvent::default()
+        })
     }
 }
 
@@ -164,6 +215,17 @@ impl MouseMoveEvent {
             point,
             webdriver_id: None,
         }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Deserialize, Serialize)]
+pub struct MouseLeaveEvent {
+    pub point: DevicePoint,
+}
+
+impl MouseLeaveEvent {
+    pub fn new(point: DevicePoint) -> Self {
+        Self { point }
     }
 }
 

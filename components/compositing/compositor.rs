@@ -360,21 +360,33 @@ impl ServoRenderer {
             .send_transaction(self.webrender_document, transaction);
     }
 
-    pub(crate) fn update_cursor(&mut self, pos: DevicePoint, result: &CompositorHitTestResult) {
-        self.cursor_pos = pos;
-
-        let cursor = match result.cursor {
-            Some(cursor) if cursor != self.cursor => cursor,
-            _ => return,
-        };
-
-        let Some(webview_id) = self
+    pub(crate) fn update_cursor_from_hittest(
+        &mut self,
+        pos: DevicePoint,
+        result: &CompositorHitTestResult,
+    ) {
+        if let Some(webview_id) = self
             .pipeline_to_webview_map
             .get(&result.pipeline_id)
-            .cloned()
-        else {
+            .copied()
+        {
+            self.update_cursor(pos, webview_id, result.cursor);
+        } else {
             warn!("Couldn't update cursor for non-WebView-associated pipeline");
-            return;
+        };
+    }
+
+    pub(crate) fn update_cursor(
+        &mut self,
+        pos: DevicePoint,
+        webview_id: WebViewId,
+        cursor: Option<Cursor>,
+    ) {
+        self.cursor_pos = pos;
+
+        let cursor = match cursor {
+            Some(cursor) if cursor != self.cursor => cursor,
+            _ => return,
         };
 
         self.cursor = cursor;
@@ -631,7 +643,9 @@ impl IOCompositor {
                         .borrow()
                         .hit_test_at_point(point, details_for_pipeline);
                     if let Ok(result) = result {
-                        self.global.borrow_mut().update_cursor(point, &result);
+                        self.global
+                            .borrow_mut()
+                            .update_cursor_from_hittest(point, &result);
                     }
                 }
 
@@ -1489,10 +1503,7 @@ impl IOCompositor {
             }))
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(skip_all, fields(servo_profiling = true), level = "trace")
-    )]
+    #[servo_tracing::instrument(skip_all)]
     fn render_inner(&mut self) -> Result<(), UnableToComposite> {
         if let Err(err) = self.rendering_context.make_current() {
             warn!("Failed to make the rendering context current: {:?}", err);
@@ -1646,10 +1657,7 @@ impl IOCompositor {
         Ref::map(self.global.borrow(), |global| &global.compositor_receiver)
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(skip_all, fields(servo_profiling = true), level = "trace")
-    )]
+    #[servo_tracing::instrument(skip_all)]
     pub fn handle_messages(&mut self, mut messages: Vec<CompositorMsg>) {
         // Check for new messages coming from the other threads in the system.
         let mut found_recomposite_msg = false;
@@ -1686,10 +1694,7 @@ impl IOCompositor {
         }
     }
 
-    #[cfg_attr(
-        feature = "tracing",
-        tracing::instrument(skip_all, fields(servo_profiling = true), level = "trace")
-    )]
+    #[servo_tracing::instrument(skip_all)]
     pub fn perform_updates(&mut self) -> bool {
         if self.global.borrow().shutdown_state() == ShutdownState::FinishedShuttingDown {
             return false;

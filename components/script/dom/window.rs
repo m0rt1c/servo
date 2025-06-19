@@ -136,6 +136,7 @@ use crate::dom::hashchangeevent::HashChangeEvent;
 use crate::dom::history::History;
 use crate::dom::htmlcollection::{CollectionFilter, HTMLCollection};
 use crate::dom::htmliframeelement::HTMLIFrameElement;
+use crate::dom::idbfactory::IDBFactory;
 use crate::dom::location::Location;
 use crate::dom::medialist::MediaList;
 use crate::dom::mediaquerylist::{MediaQueryList, MediaQueryListMatchState};
@@ -248,6 +249,7 @@ pub(crate) struct Window {
     document: MutNullableDom<Document>,
     location: MutNullableDom<Location>,
     history: MutNullableDom<History>,
+    indexeddb: MutNullableDom<IDBFactory>,
     custom_element_registry: MutNullableDom<CustomElementRegistry>,
     performance: MutNullableDom<Performance>,
     #[no_trace]
@@ -1096,6 +1098,14 @@ impl WindowMethods<crate::DomTypeHolder> for Window {
         self.history.or_init(|| History::new(self, CanGc::note()))
     }
 
+    // https://w3c.github.io/IndexedDB/#factory-interface
+    fn IndexedDB(&self) -> DomRoot<IDBFactory> {
+        self.indexeddb.or_init(|| {
+            let global_scope = self.upcast::<GlobalScope>();
+            IDBFactory::new(global_scope, CanGc::note())
+        })
+    }
+
     // https://html.spec.whatwg.org/multipage/#dom-window-customelements
     fn CustomElements(&self) -> DomRoot<CustomElementRegistry> {
         self.custom_element_registry
@@ -1439,14 +1449,11 @@ impl WindowMethods<crate::DomTypeHolder> for Window {
     }
 
     fn WebdriverElement(&self, id: DOMString) -> Option<DomRoot<Element>> {
-        find_node_by_unique_id_in_document(&self.Document(), id.into())
-            .ok()
-            .and_then(Root::downcast)
+        find_node_by_unique_id_in_document(&self.Document(), id.into()).and_then(Root::downcast)
     }
 
     fn WebdriverFrame(&self, id: DOMString) -> Option<DomRoot<Element>> {
         find_node_by_unique_id_in_document(&self.Document(), id.into())
-            .ok()
             .and_then(Root::downcast::<HTMLIFrameElement>)
             .map(Root::upcast::<Element>)
     }
@@ -1457,9 +1464,7 @@ impl WindowMethods<crate::DomTypeHolder> for Window {
     }
 
     fn WebdriverShadowRoot(&self, id: DOMString) -> Option<DomRoot<ShadowRoot>> {
-        find_node_by_unique_id_in_document(&self.Document(), id.into())
-            .ok()
-            .and_then(Root::downcast)
+        find_node_by_unique_id_in_document(&self.Document(), id.into()).and_then(Root::downcast)
     }
 
     // https://drafts.csswg.org/cssom/#dom-window-getcomputedstyle
@@ -3098,6 +3103,7 @@ impl Window {
             navigator: Default::default(),
             location: Default::default(),
             history: Default::default(),
+            indexeddb: Default::default(),
             custom_element_registry: Default::default(),
             window_proxy: Default::default(),
             document: Default::default(),
